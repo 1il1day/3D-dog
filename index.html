@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    @font-face {font-family: 'PyeongChangPeace-Light';src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/PyeongChangPeace-Light.woff2') format('woff2');font-weight: 300;font-style: normal;}
+    #wrap{padding-top: 100px; font-family: 'PyeongChangPeace-Light';}
+    h2{color: rgb(243, 119, 2); text-align: center;}
+    .canvas-wrap{width: 400px; margin: auto; border: 2px solid #eee; border-radius: 50px;}
+    .cute{text-align: center;}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+  <h2>🌼 댕댕이 시바견 🌼</h2>
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="400" height="400" style="border-radius: 50px;"></canvas>
+    </div>
+    <p class="cute">" 겁.나 귀.엽.다! "</p>
+  </div>
+  
+  <script type="importmap">
+    {
+    "imports": {
+      "three": "https://unpkg.com/three@0.139.2/build/three.module.js",
+      "GLTFLoader" : "https://unpkg.com/three@0.139.2/examples/jsm/loaders/GLTFLoader.js"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import {GLTFLoader} from 'GLTFLoader';
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://unpkg.com/three@0.139.2/examples/jsm/controls/OrbitControls.js';
+
+    let scene = new THREE.Scene();
+    let renderer = new THREE.WebGLRenderer({
+      canvas : document.querySelector('#canvas'),
+      antialias : true, // 안티앨리어스 (계단현상 제거)
+    });
+    renderer.outputEncoding = THREE.sRGBEncoding; // 인코딩방식 설정 (색상)
+
+    // 카메라
+    let camera = new THREE.PerspectiveCamera(30,1); // 원근법 카메라 설치
+    camera.position.set(0,0,6) // 카메라 위치 조절
+    scene.background = new THREE.Color('white'); // 장면 배경색
+
+    // 조명
+    let light = new THREE.DirectionalLight(0xffff00,10); // 조명 설정
+    scene.add(light);
+    
+    // 카메라-마우스 상호작용 (OrbitControls)
+    const orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.maxPolarAngle = Math.PI * 0.5;
+    orbitControls.minDistance = 0.1;
+    orbitControls.maxDistance = 100;
+    orbitControls.autoRotate = true;
+    orbitControls.autoRotateSpeed = 1.0;
+
+    // 장면으로 불러오기
+    let loader = new GLTFLoader();
+    loader.load('shiba/scene.gltf',function(gltf){
+      scene.add(gltf.scene);
+
+      function animate(){ // 회전 애니메이션 추가
+        requestAnimationFrame(animate)
+        gltf.scene.rotation.y += 0.001;
+        orbitControls.update(); // 카메라-마우스 상호작용 업데이트
+        renderer.render(scene,camera); // 장면, 카메라 렌더
+      }
+      animate();
+    });
+    
+
+  </script>
+  
+  <!-- 마우스 효과 -->
+  <script>
+    function clickEffect() {
+    let balls = [];
+    let longPressed = false;
+    let longPress;
+    let multiplier = 0;
+    let width, height;
+    let origin;
+    let normal;
+    let ctx;
+    const colours = ["#F73859", "#14FFEC", "#00E0FF", "#FF99FE", "#FAF15D"];
+    const canvas = document.createElement("canvas");
+    document.body.appendChild(canvas);
+    canvas.setAttribute("style", "width: 100%; height: 100%; top: 0; left: 0; z-index: 99999; position: fixed; pointer-events: none;");
+    const pointer = document.createElement("span");
+    pointer.classList.add("pointer");
+    document.body.appendChild(pointer);
+  
+    if (canvas.getContext && window.addEventListener) {
+      ctx = canvas.getContext("2d");
+      updateSize();
+      window.addEventListener('resize', updateSize, false);
+      loop();
+      window.addEventListener("mousedown", function(e) {
+        pushBalls(randBetween(10, 20), e.clientX, e.clientY);
+        document.body.classList.add("is-pressed");
+        longPress = setTimeout(function(){
+          document.body.classList.add("is-longpress");
+          longPressed = true;
+        }, 500);
+      }, false);
+      window.addEventListener("mouseup", function(e) {
+        clearInterval(longPress);
+        if (longPressed == true) {
+          document.body.classList.remove("is-longpress");
+          pushBalls(randBetween(50 + Math.ceil(multiplier), 100 + Math.ceil(multiplier)), e.clientX, e.clientY);
+          longPressed = false;
+        }
+        document.body.classList.remove("is-pressed");
+      }, false);
+      window.addEventListener("mousemove", function(e) {
+        let x = e.clientX;
+        let y = e.clientY;
+        pointer.style.top = y + "px";
+        pointer.style.left = x + "px";
+      }, false);
+    } else {
+      console.log("canvas or addEventListener is unsupported!");
+    }
+  
+  
+    function updateSize() {
+      canvas.width = window.innerWidth * 2;
+      canvas.height = window.innerHeight * 2;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(2, 2);
+      width = (canvas.width = window.innerWidth);
+      height = (canvas.height = window.innerHeight);
+      origin = {
+        x: width / 2,
+        y: height / 2
+      };
+      normal = {
+        x: width / 2,
+        y: height / 2
+      };
+    }
+    class Ball {
+      constructor(x = origin.x, y = origin.y) {
+        this.x = x;
+        this.y = y;
+        this.angle = Math.PI * 2 * Math.random();
+        if (longPressed == true) {
+          this.multiplier = randBetween(10 + multiplier, 10 + multiplier);
+        } else {
+          this.multiplier = randBetween(6, 5);
+        }
+        this.vx = (this.multiplier + Math.random() * 0.5) * Math.cos(this.angle);
+        this.vy = (this.multiplier + Math.random() * 0.5) * Math.sin(this.angle);
+        this.r = randBetween(7, 10) + 1 * Math.random();
+        this.color = colours[Math.floor(Math.random() * colours.length)];
+      }
+      update() {
+        this.x += this.vx - normal.x;
+        this.y += this.vy - normal.y;
+        normal.x = -2 / window.innerWidth * Math.sin(this.angle);
+        normal.y = -2 / window.innerHeight * Math.cos(this.angle);
+        this.r -= 0.3;
+        this.vx *= 0.9;
+        this.vy *= 0.9;
+      }
+    }
+  
+    function pushBalls(count = 1, x = origin.x, y = origin.y) {
+      for (let i = 0; i < count; i++) {
+        balls.push(new Ball(x, y));
+      }
+    }
+  
+    function randBetween(min, max) {
+      return Math.floor(Math.random() * max) + min;
+    }
+  
+    function loop() {
+      ctx.fillStyle = "rgba(255, 255, 255, 0)";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < balls.length; i++) {
+        let b = balls[i];
+        if (b.r < 0) continue;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2, false);
+        ctx.fill();
+        b.update();
+      }
+      if (longPressed == true) {
+        multiplier += 0.2;
+      } else if (!longPressed && multiplier >= 0) {
+        multiplier -= 0.4;
+      }
+      removeBall();
+      requestAnimationFrame(loop);
+    }
+  
+    function removeBall() {
+      for (let i = 0; i < balls.length; i++) {
+        let b = balls[i];
+        if (b.x + b.r < 0 || b.x - b.r > width || b.y + b.r < 0 || b.y - b.r > height || b.r < 0) {
+          balls.splice(i, 1);
+        }
+      }
+    }
+  }
+  clickEffect();
+  </script>
+</body>
+</html>
